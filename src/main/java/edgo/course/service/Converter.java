@@ -5,12 +5,15 @@ import edgo.course.dto.HomeworkDto;
 import edgo.course.dto.ParagraphDto;
 import edgo.course.dto.PhotoDto;
 import edgo.course.dto.TaskDto;
+import edgo.course.dto.VideoDto;
 import edgo.course.entity.Course;
 import edgo.course.entity.Homework;
 import edgo.course.entity.Paragraph;
 import edgo.course.entity.Photo;
 import edgo.course.entity.Task;
+import edgo.course.entity.Video;
 import edgo.course.repository.PhotoRepository;
+import edgo.course.repository.VideoRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,7 @@ import java.util.Optional;
 public class Converter {
 
     private final PhotoRepository photoRepository;
+    private final VideoRepository videoRepository;
 
     public Course convertToEntity(CourseDto dto) {
         return Course.builder()
@@ -33,18 +37,22 @@ public class Converter {
                 .build();
     }
 
+
+    // TODO зарефакторить это Г
     private Photo convertPhotoToEntity(PhotoDto dto) {
         if (dto == null) {
             return null;
         }
-        Optional<Photo> photo = photoRepository.findById(dto.getId());
-        return photo.orElseGet(() -> Photo.builder()
+        if(dto.getId() != null) {
+            return photoRepository.findById(dto.getId()).orElse(null);
+        }
+        return Photo.builder()
                 .fileName(dto.getFileName())
                 .contentType(dto.getContentType())
                 .dataBlob(dto.getDataBlob())
                 .uploadTime(LocalDateTime.now())
                 .fileSize(dto.getFileSize())
-                .build());
+                .build();
     }
 
     private PhotoDto convertPhotoToDto(Photo entity) {
@@ -72,6 +80,31 @@ public class Converter {
         return Paragraph.builder()
                 .name(paragraphDto.getName())
                 .homeworks(convertHomeworks(paragraphDto.getHomeworks()))
+                .textContent(paragraphDto.getTextContent())
+                .video(convertVideoToEntity(paragraphDto.getVideo()))
+                .build();
+    }
+
+    private Video convertVideoToEntity(VideoDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        if(dto.getId() != null) {
+            return videoRepository.findById(dto.getId()).orElse(null);
+        }
+        return null; // Videos are uploaded via VideoService, not created via DTOs
+    }
+
+    private VideoDto convertVideoToDto(Video entity) {
+        if (entity == null) {
+            return null;
+        }
+        return VideoDto.builder()
+                .id(entity.getId())
+                .fileName(entity.getFileName())
+                .originalFileName(entity.getOriginalFileName())
+                .contentType(entity.getContentType())
+                .fileSize(entity.getFileSize())
                 .build();
     }
 
@@ -101,11 +134,15 @@ public class Converter {
     private Task convertTask(TaskDto taskDto) {
         return Task.builder()
                 .name(taskDto.getName())
+                .description(taskDto.getDescription())
+                .rightAnswer(taskDto.getRightAnswer())
+                .photo(convertPhotoToEntity(taskDto.getPhoto()))
                 .build();
     }
 
     public CourseDto convertToDto(Course entity) {
         return CourseDto.builder()
+                .id(entity.getId())
                 .name(entity.getName())
                 .paragraphs(convertParagraphsToDto(entity.getParagraphs()))
                 .photo(convertPhotoToDto(entity.getPhoto()))
@@ -125,6 +162,8 @@ public class Converter {
         return ParagraphDto.builder()
                 .name(paragraph.getName())
                 .homeworks(convertHomeworksToDto(paragraph.getHomeworks()))
+                .textContent(paragraph.getTextContent())
+                .video(convertVideoToDto(paragraph.getVideo()))
                 .build();
     }
 
@@ -156,6 +195,9 @@ public class Converter {
     private TaskDto convertTaskToDto(Task task) {
         return TaskDto.builder()
                 .name(task.getName())
+                .description(task.getDescription())
+                .rightAnswer(task.getRightAnswer())
+                .photo(convertPhotoToDto(task.getPhoto()))
                 .build();
     }
 }

@@ -20,5 +20,7 @@ public class Task {
     private String description;
     private String rightAnswer;
 
-//  TODO  pictures
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "photo_id")
+    private Photo photo;
 }

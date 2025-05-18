@@ -26,8 +26,7 @@ public class Paragraph {
 
     private String textContent;
 
-
-
-    //  TODO video
-
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "video_id")
+    private Video video;
 }

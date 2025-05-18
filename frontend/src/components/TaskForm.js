@@ -1,9 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Button, Row, Col } from 'react-bootstrap';
+import axios from 'axios';
 
 const TaskForm = ({ task, index, onChange, onRemove }) => {
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  useEffect(() => {
+    if (task.photo) {
+      setPhotoPreview(`/api/photos/${task.photo.id}`);
+    }
+  }, [task.photo]);
+
   const handleChange = (field, value) => {
     onChange(index, { ...task, [field]: value });
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPhotoPreview(previewUrl);
+      
+      // Upload the photo when selected
+      uploadPhoto(file);
+    }
+  };
+
+  const uploadPhoto = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await axios.post('/api/photos/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      // Update the task with the new photo information
+      handleChange('photo', {
+        id: response.data.id,
+        fileName: response.data.fileName
+      });
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
   };
 
   return (
@@ -49,6 +92,24 @@ const TaskForm = ({ task, index, onChange, onRemove }) => {
           onChange={(e) => handleChange('rightAnswer', e.target.value)}
           placeholder="Введите правильный ответ"
         />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Фотография к задаче</Form.Label>
+        <Form.Control
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoChange}
+        />
+        {photoPreview && (
+          <div className="mt-2">
+            <img 
+              src={photoPreview} 
+              alt="Preview" 
+              style={{ maxWidth: '200px', maxHeight: '200px' }}
+            />
+          </div>
+        )}
       </Form.Group>
     </div>
   );

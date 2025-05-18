@@ -15,7 +15,7 @@ const HomeworkForm = ({ homework, index, onChange, onRemove }) => {
 
   const handleAddTask = () => {
     const tasks = [...(homework.tasks || [])];
-    tasks.push({ name: '', description: '', rightAnswer: '' });
+    tasks.push({ name: '', description: '', rightAnswer: '', photo: null });
     handleChange('tasks', tasks);
   };
 

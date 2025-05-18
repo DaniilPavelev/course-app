@@ -1,8 +1,13 @@
-import React from 'react';
-import { Form, Button } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Alert } from 'react-bootstrap';
 import HomeworkForm from './HomeworkForm';
+import VideoService from '../services/VideoService';
 
 const ParagraphForm = ({ paragraph, index, onChange, onRemove }) => {
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const [videoError, setVideoError] = useState(null);
+
   const handleChange = (field, value) => {
     onChange(index, { ...paragraph, [field]: value });
   };
@@ -23,6 +28,45 @@ const ParagraphForm = ({ paragraph, index, onChange, onRemove }) => {
     const updatedHomeworks = [...(paragraph.homeworks || [])];
     updatedHomeworks.splice(homeworkIndex, 1);
     handleChange('homeworks', updatedHomeworks);
+  };
+
+  const handleVideoChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVideoFile(file);
+      setVideoLoading(true);
+      setVideoError(null);
+      
+      try {
+        // Upload the video
+        const uploadedVideo = await VideoService.uploadVideo(file);
+        
+        // Update paragraph with video data
+        handleChange('video', uploadedVideo);
+        setVideoLoading(false);
+      } catch (error) {
+        setVideoError('Ошибка при загрузке видео');
+        setVideoLoading(false);
+      }
+    }
+  };
+
+  const handleRemoveVideo = async () => {
+    if (paragraph.video && paragraph.video.id) {
+      setVideoLoading(true);
+      setVideoError(null);
+      
+      try {
+        await VideoService.deleteVideo(paragraph.video.id);
+        handleChange('video', null);
+        setVideoLoading(false);
+      } catch (error) {
+        setVideoError('Ошибка при удалении видео');
+        setVideoLoading(false);
+      }
+    } else {
+      handleChange('video', null);
+    }
   };
 
   return (
@@ -57,6 +101,46 @@ const ParagraphForm = ({ paragraph, index, onChange, onRemove }) => {
           onChange={(e) => handleChange('textContent', e.target.value)}
           placeholder="Введите текстовое содержание параграфа"
         />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Видео для параграфа</Form.Label>
+        {videoError && <Alert variant="danger">{videoError}</Alert>}
+        
+        {paragraph.video ? (
+          <div className="mb-2">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <p className="mb-0"><strong>Файл:</strong> {paragraph.video.originalFileName}</p>
+                <p className="mb-0"><strong>Размер:</strong> {Math.round(paragraph.video.fileSize / 1024 / 1024 * 100) / 100} MB</p>
+              </div>
+              <Button 
+                variant="outline-danger" 
+                size="sm"
+                onClick={handleRemoveVideo}
+                disabled={videoLoading}
+              >
+                {videoLoading ? 'Удаление...' : 'Удалить видео'}
+              </Button>
+            </div>
+            <video 
+              controls 
+              className="img-fluid w-100" 
+              style={{ maxHeight: '300px' }}
+              src={`/api/videos/${paragraph.video.id}`} 
+            />
+          </div>
+        ) : (
+          <div>
+            <Form.Control
+              type="file"
+              accept="video/*"
+              onChange={handleVideoChange}
+              disabled={videoLoading}
+            />
+            {videoLoading && <Alert variant="info" className="mt-2">Загрузка видео...</Alert>}
+          </div>
+        )}
       </Form.Group>
 
       <div className="mb-3">

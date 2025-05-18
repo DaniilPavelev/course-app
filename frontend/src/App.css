@@ -1,0 +1,27 @@
+.App {
+  min-height: 100vh;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.form-section-title {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nested-form {
+  margin-left: 2rem;
+  padding: 1rem;
+  border-left: 3px solid #dee2e6;
+}
+
+.remove-button {
+  margin-left: 10px;
+} 
